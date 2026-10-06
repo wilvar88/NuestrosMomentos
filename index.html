@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Nuestros Momentos BaseTek</title>
+    <!-- Google Fonts para tipografía Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-anim"></div>
+    
+    <header class="glass-header">
+        <div class="logo-container">
+            <img src="Logo BT.png" alt="BaseTek Logo" class="logo">
+            <h1>Nuestros Momentos</h1>
+        </div>
+        <div class="user-actions" id="userActions" style="display: none;">
+            <div id="adminBtn" class="admin-icon" style="display: none;" title="Panel de Administrador">
+                <i class="fa-solid fa-gear"></i>
+            </div>
+            <button id="ratePortalBtn" class="btn-icon" title="Calificar Portal"><i class="fa-solid fa-star"></i></button>
+            <div class="user-profile-sm" id="profileBtn" style="cursor: pointer;" title="Ver Perfil y Estadísticas">
+                <img id="userAvatar" src="" alt="Avatar">
+                <span id="userNameHeader"></span>
+            </div>
+            <button id="logoutBtn" class="btn-icon" title="Salir"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- VISTA DE LOGIN -->
+        <section id="loginView" class="glass-panel active-view" style="text-align: center;">
+            <h2>Ingreso a Galería</h2>
+            <p>Ingresa tu número de documento para acceder a los mejores momentos.</p>
+            <div class="input-group">
+                <input type="text" id="documentoInput" placeholder="Número de Documento" required>
+            </div>
+            <button id="requestTokenBtn" class="btn-primary">Ingresar</button>
+            <div id="loginMessage" class="message"></div>
+        </section>
+
+        <!-- VISTA DE VERIFICACIÓN TOKEN -->
+        <section id="tokenView" class="glass-panel">
+            <h2>Verificación</h2>
+            <p id="tokenHint">Se ha enviado un token a tu correo.</p>
+            <div class="input-group">
+                <input type="text" id="tokenInput" placeholder="Token de 6 dígitos" maxlength="6" required>
+            </div>
+            <button id="verifyTokenBtn" class="btn-primary">Validar Token</button>
+            <button id="backToLoginBtn" class="btn-text">Volver</button>
+            <div id="tokenMessage" class="message"></div>
+        </section>
+
+        <!-- MODAL COMPROMISOS -->
+        <div id="compromisoModal" class="modal-overlay">
+            <div class="modal-content glass-panel">
+                <div class="user-info-card">
+                    <img id="modalUserFoto" src="" alt="Foto Perfil">
+                    <div>
+                        <h3 id="modalUserName"></h3>
+                        <p id="modalUserDoc"></p>
+                        <p id="modalUserEmail"></p>
+                    </div>
+                </div>
+                
+                <div class="compromisos-text">
+                    <h3>📸 ¡Bienvenidos a Nuestros Momentos BaseTek!</h3>
+                    <p>Este espacio ha sido creado para revivir y compartir los mejores momentos de nuestras actividades de integración, bienestar y relacionamiento. Al acceder a esta galería, aceptas las siguientes pautas de convivencia y uso responsable:</p>
+                    <ul>
+                        <li><strong>Uso exclusivo personal e interno:</strong> El material disponible está destinado únicamente al recuerdo personal y al fortalecimiento de nuestra cultura corporativa. Queda prohibido el uso comercial o su difusión pública no autorizada fuera del entorno laboral.</li>
+                        <li><strong>Respeto a la privacidad e imagen ajena:</strong> Puedes descargar tus fotografías libremente. Si deseas publicar en redes sociales fotos donde aparezcan compañeros de equipo, asegúrate de contar previamente con su consentimiento.</li>
+                        <li><strong>Tratamiento de Datos Personales:</strong> Las fotografías fueron capturadas en el marco de actividades corporativas y son tratadas bajo la Política de Tratamiento de Datos Personales de BaseTek (Ley 1581 de 2012).</li>
+                        <li><strong>Derecho de supresión (Habeas Data):</strong> Si por alguna razón prefieres que una imagen en la que apareces sea retirada de la plataforma, puedes solicitarlo en cualquier momento al área encargada (Talento Humano / Comunicaciones) y se procederá a su eliminación de la galería pública.</li>
+                    </ul>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="acceptTerms">
+                    <label for="acceptTerms">He leído y acepto los términos de uso y tratamiento de imagen.</label>
+                </div>
+                
+                <button id="enterGalleryBtn" class="btn-primary" disabled>Continuar a la Galería</button>
+            </div>
+        </div>
+
+        <!-- MODAL CALIFICAR PORTAL -->
+        <div id="ratingModal" class="modal-overlay">
+            <div class="modal-content glass-panel" style="text-align: center;">
+                <span class="close-modal" id="closeRatingModal">&times;</span>
+                <h2>Califica Nuestro Portal</h2>
+                <p>Tu opinión es muy importante para nosotros.</p>
+                <div class="stars" id="starRating">
+                    <i class="fa-regular fa-star" data-val="1"></i>
+                    <i class="fa-regular fa-star" data-val="2"></i>
+                    <i class="fa-regular fa-star" data-val="3"></i>
+                    <i class="fa-regular fa-star" data-val="4"></i>
+                    <i class="fa-regular fa-star" data-val="5"></i>
+                </div>
+                <textarea id="ratingComment" placeholder="Deja tus comentarios aquí..." style="width: 100%; height: 100px; margin-top: 20px; border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; resize: none; font-family: 'Inter', sans-serif;"></textarea>
+                <button id="submitRatingBtn" class="btn-primary" style="margin-top: 20px;">Enviar Calificación</button>
+            </div>
+        </div>
+
+        <!-- MODAL PERFIL Y ESTADÍSTICAS -->
+        <div id="profileModal" class="modal-overlay">
+            <div class="modal-content glass-panel" style="text-align: center;">
+                <span class="close-modal" id="closeProfileModal">&times;</span>
+                <div class="user-info-card" style="justify-content: center; border-bottom: none; margin-bottom: 10px;">
+                    <img id="profileModalFoto" src="" alt="Foto Perfil">
+                    <div style="text-align: left;">
+                        <h3 id="profileModalName"></h3>
+                        <p id="profileModalCargo" style="margin-bottom: 0; color: var(--secondary);"></p>
+                    </div>
+                </div>
+                <h3 style="margin-top: 15px; color: white;">Interacciones en tus fotos</h3>
+                <p>Resumen de cómo han interactuado tus compañeros con las fotos en las que apareces.</p>
+                <div class="stats-grid" id="profileStats">
+                    <div class="stat-box" title="Me Encanta"><i class="fa-solid fa-heart" style="color: #ff4757;"></i> <span id="stat-heart">0</span></div>
+                    <div class="stat-box" title="Me Gusta"><i class="fa-solid fa-thumbs-up" style="color: #43bff5;"></i> <span id="stat-like">0</span></div>
+                    <div class="stat-box" title="Aplausos"><i class="fa-solid fa-hands-clapping" style="color: #feca57;"></i> <span id="stat-clap">0</span></div>
+                    <div class="stat-box" title="Me Divierte"><i class="fa-solid fa-face-laugh-squint" style="color: #ff9f43;"></i> <span id="stat-haha">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA GALERÍA -->
+        <section id="galleryView" class="view">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tab-yo">YO</button>
+                <button class="tab-btn" data-tab="tab-eventos">Eventos</button>
+            </div>
+            
+            <div id="tab-yo" class="tab-content active glass-panel">
+                <h2>Mis Fotos</h2>
+                <div id="misFotosGrid" class="image-grid">
+                    <div class="loader">Cargando fotos...</div>
+                </div>
+            </div>
+            
+            <div id="tab-eventos" class="tab-content glass-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <h2>Galería de Eventos</h2>
+                    <button id="backToAlbumsBtn" class="btn-text" style="display:none; width:auto; color:#ff4757; background: rgba(255, 71, 87, 0.1); border-radius: 8px; padding: 8px 15px;"><i class="fa-solid fa-arrow-left"></i> Volver a Álbumes</button>
+                </div>
+                
+                <!-- Vista de Lista de Álbumes -->
+                <div id="eventosContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; margin-top: 30px;">
+                    <div class="loader">Cargando eventos...</div>
+                </div>
+                
+                <!-- Vista de un Álbum Abierto (Polaroid) -->
+                <div id="singleAlbumContainer" style="display:none;">
+                    <h3 id="singleAlbumTitle" style="text-align:center; color: var(--secondary); margin-bottom: 20px; font-size: 1.5rem;"></h3>
+                    <div id="singleAlbumGrid" class="polaroid-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA ADMIN -->
+        <section id="adminView" class="view glass-panel">
+            <div class="admin-header">
+                <h2>Panel de Administración</h2>
+                <button id="closeAdminBtn" class="btn-text">Volver a Galería</button>
+            </div>
+
+            <!-- Tabs del Admin -->
+            <div class="tabs" style="margin-bottom: 30px;">
+                <button class="tab-btn active" data-tab="tab-admin-dashboard"><i class="fa-solid fa-chart-bar"></i> Dashboard</button>
+                <button class="tab-btn" data-tab="tab-admin-users"><i class="fa-solid fa-users"></i> Colaboradores</button>
+            </div>
+
+            <!-- Tab: Dashboard -->
+            <div id="tab-admin-dashboard" class="tab-content active">
+                <div class="admin-dashboard bento-grid">
+                    <div class="bento-box neumorphic">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <div class="bento-info">
+                            <h3>Ingresos Totales</h3>
+                            <p id="dash-ingresos">0</p>
+                        </div>
+                    </div>
+                    <div class="bento-box neumorphic">
+                        <i class="fa-solid fa-eye"></i>
+                        <div class="bento-info">
+                            <h3>Aperturas de Fotos</h3>
+                            <p id="dash-aperturas">0</p>
+                        </div>
+                    </div>
+                    <div class="bento-box neumorphic">
+                        <i class="fa-solid fa-download"></i>
+                        <div class="bento-info">
+                            <h3>Descargas</h3>
+                            <p id="dash-descargas">0</p>
+                        </div>
+                    </div>
+                    <div class="bento-box neumorphic">
+                        <i class="fa-solid fa-star"></i>
+                        <div class="bento-info">
+                            <h3>Valoraciones (Promedio)</h3>
+                            <p id="dash-valoraciones">0.0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Tab: Usuarios / PDF -->
+            <div id="tab-admin-users" class="tab-content">
+                <p>Selecciona los colaboradores para generar el Acta de Compromiso en PDF.</p>
+                <div class="admin-controls">
+                    <button id="downloadPdfBtn" class="btn-primary" disabled><i class="fa-solid fa-file-pdf"></i> Descargar Actas Seleccionadas</button>
+                </div>
+                <div class="table-container">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllUsers"></th>
+                                <th>Documento</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Confirmado</th>
+                                <th>Rol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Llenado con JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+        
+        <!-- Modal Imagen Ampliada -->
+        <div id="imageModal" class="modal-overlay">
+            <div class="image-modal-content">
+                <span class="close-modal" id="closeImageModal">&times;</span>
+                <button class="nav-btn prev-btn" id="prevImageBtn"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="canvas-container" style="position: relative;">
+                    <canvas id="photoCanvas"></canvas>
+                </div>
+                <!-- Banner de Interacciones con Blur (Movido fuera del canvas) -->
+                <div class="interaction-banner" id="interactionBanner">
+                    <button class="int-btn" data-type="heart" title="Me Encanta"><i class="fa-solid fa-heart"></i></button>
+                    <button class="int-btn" data-type="like" title="Me Gusta"><i class="fa-solid fa-thumbs-up"></i></button>
+                    <button class="int-btn" data-type="clap" title="Aplausos"><i class="fa-solid fa-hands-clapping"></i></button>
+                    <button class="int-btn" data-type="haha" title="Me Divierte"><i class="fa-solid fa-face-laugh-squint"></i></button>
+                </div>
+                <button class="nav-btn next-btn" id="nextImageBtn"><i class="fa-solid fa-chevron-right"></i></button>
+                <button id="downloadImageBtn" class="btn-primary"><i class="fa-solid fa-download"></i> Descargar Imagen Enmarcada</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2026 Derechos reservados de Wilson Varela
+    </footer>
+
+    <!-- Librerías Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
