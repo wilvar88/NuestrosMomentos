@@ -14,7 +14,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="background-anim"></div>
+    <!-- FONDO CÓSMICO Y POLAROIDS DINÁMICAS (LIGERO, SIN GIF PESADO) -->
+    <div class="cosmic-deep-background"></div>
+    <div class="cosmic-ambient-glow"></div>
+    <div class="polaroid-background" id="polaroidBackground" aria-hidden="true"></div>
+
+    <!-- CANVAS PARA EL CURSOR COMETA CÓSMICA -->
+    <canvas id="cosmicCursorCanvas" class="cosmic-cursor-canvas"></canvas>
     
     <header class="glass-header">
         <div class="logo-container">
@@ -35,28 +41,96 @@
     </header>
 
     <main class="container">
-        <!-- VISTA DE LOGIN -->
-        <section id="loginView" class="glass-panel active-view" style="text-align: center;">
-            <h2>Ingreso a Galería</h2>
-            <p>Ingresa tu número de documento para acceder a los mejores momentos.</p>
-            <div class="input-group">
-                <input type="text" id="documentoInput" placeholder="Número de Documento" required>
+        <!-- ESCENARIO PRINCIPAL: CÁMARA A LA IZQUIERDA Y MODAL DE CLAVE/ACCESO A LA DERECHA -->
+        <div class="auth-hero-stage" id="authHeroStage">
+            <!-- CÁMARA FOTOGRÁFICA INTERACTIVA DE LUJO -->
+            <div class="camera-hero-wrapper" id="cameraHeroWrapper" title="¡Haz clic en la cámara o en el obturador para capturar!">
+                <div class="camera-device" id="cameraDevice">
+                    <!-- Parte Superior Metálica -->
+                    <div class="camera-top-bar">
+                        <div class="camera-shutter-btn" id="cameraShutterBtn" title="Disparar Obturador"></div>
+                        <div class="camera-dial" title="Modo 35mm"></div>
+                        <div class="camera-flash-unit" id="cameraFlashUnit">
+                            <div class="flash-reflector">
+                                <div class="flash-bulb"></div>
+                            </div>
+                            <div class="flash-lens-flare" id="flashLensFlare"></div>
+                        </div>
+                        <div class="camera-hotshoe"></div>
+                    </div>
+                    
+                    <!-- Cuerpo de la Cámara -->
+                    <div class="camera-body">
+                        <div class="camera-leatherette"></div>
+                        <div class="camera-viewfinder" title="Visor Óptico"></div>
+                        <div class="camera-red-dot" title="Edición Especial"></div>
+                        
+                        <!-- Ensamblaje del Lente Frontal -->
+                        <div class="camera-lens-assembly">
+                            <div class="lens-outer-bezel">
+                                <div class="lens-ribbed-focus"></div>
+                                <div class="lens-aperture-scale"><span>F/1.4 35mm</span></div>
+                                <div class="lens-glass-element">
+                                    <div class="lens-reflection"></div>
+                                    <div class="lens-iris">
+                                        <i class="fa-solid fa-camera lens-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="camera-brand-plate">
+                            <span>BaseTek Moments</span>
+                        </div>
+                        <div class="camera-grip"></div>
+                    </div>
+                    
+                    <!-- Destello de Flash en Pantalla -->
+                    <div class="camera-flash-burst" id="cameraFlashBurst"></div>
+                </div>
+                
+                <div class="camera-caption">
+                    <span class="live-dot"></span>
+                    <span>Capturando tus mejores momentos</span>
+                </div>
             </div>
-            <button id="requestTokenBtn" class="btn-primary">Ingresar</button>
-            <div id="loginMessage" class="message"></div>
-        </section>
 
-        <!-- VISTA DE VERIFICACIÓN TOKEN -->
-        <section id="tokenView" class="glass-panel">
-            <h2>Verificación</h2>
-            <p id="tokenHint">Se ha enviado un token a tu correo.</p>
-            <div class="input-group">
-                <input type="text" id="tokenInput" placeholder="Token de 6 dígitos" maxlength="6" required>
+            <!-- CONTENEDOR DE MODALES / FORMULARIOS DE ACCESO -->
+            <div class="auth-forms-container" id="authFormsContainer">
+                <!-- VISTA DE LOGIN -->
+                <section id="loginView" class="glass-panel active-view" style="text-align: center;">
+                    <div class="auth-card-badge"><i class="fa-solid fa-shield-halved"></i> Acceso Seguro</div>
+                    <h2>Ingreso a Galería</h2>
+                    <p>Ingresa tu número de documento para acceder a los mejores momentos.</p>
+                    <div class="input-group">
+                        <i class="fa-solid fa-id-card input-prefix-icon"></i>
+                        <input type="text" id="documentoInput" placeholder="Número de Documento" required autocomplete="off">
+                    </div>
+                    <button id="requestTokenBtn" class="btn-primary">
+                        <span>Ingresar</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                    <div id="loginMessage" class="message"></div>
+                </section>
+
+                <!-- VISTA DE VERIFICACIÓN TOKEN (MODAL DE CLAVE) -->
+                <section id="tokenView" class="glass-panel" style="text-align: center;">
+                    <div class="auth-card-badge token-badge"><i class="fa-solid fa-key"></i> Clave de Validación</div>
+                    <h2>Verificación</h2>
+                    <p id="tokenHint">Se ha enviado un token a tu correo.</p>
+                    <div class="input-group">
+                        <i class="fa-solid fa-lock input-prefix-icon"></i>
+                        <input type="text" id="tokenInput" placeholder="Token de 6 dígitos" maxlength="6" required autocomplete="off">
+                    </div>
+                    <button id="verifyTokenBtn" class="btn-primary">
+                        <span>Validar Token</span> <i class="fa-solid fa-check"></i>
+                    </button>
+                    <button id="backToLoginBtn" class="btn-text">
+                        <i class="fa-solid fa-arrow-left"></i> Volver a ingresar documento
+                    </button>
+                    <div id="tokenMessage" class="message"></div>
+                </section>
             </div>
-            <button id="verifyTokenBtn" class="btn-primary">Validar Token</button>
-            <button id="backToLoginBtn" class="btn-text">Volver</button>
-            <div id="tokenMessage" class="message"></div>
-        </section>
+        </div>
 
         <!-- MODAL COMPROMISOS -->
         <div id="compromisoModal" class="modal-overlay">
