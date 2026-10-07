@@ -37,10 +37,11 @@ const modals = {
 // EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicialización de Fondo Polaroid Dinámico, Cursor Cósmico y Cámara
+    // Inicialización de Fondo Polaroid Dinámico, Cursor Cósmico, Cámara e Índice de Fotos
     initPolaroidBackground();
     initCosmicCometCursor();
     initCameraInteractions();
+    initProfilePhotosIndex();
 
     // Soporte para presionar 'Enter' en inputs
     const docInput = document.getElementById('documentoInput');
@@ -200,20 +201,111 @@ function createFloatingIcon(x, y, iconClass, color) {
     }
 }
 
-// Helper de foto de perfil
+// ==========================================
+// GESTOR DE FOTOS DE PERFIL (.PNG / .JPG / .JPEG)
+// ==========================================
+// Índice en memoria de fotos de perfil disponibles en la carpeta 'Foto de Perfil'
+// Mapea documento -> nombre de archivo (ej: "1007157926" -> "1007157926.jpg" o "1012328119" -> "1012328119.png")
+const profilePhotosIndex = new Map();
+let profileIndexPromise = null;
+
+/**
+ * Escanea de forma asíncrona la carpeta 'Foto de Perfil' para descubrir todos los archivos (.png, .jpg, .jpeg)
+ * existentes en el servidor local.
+ */
+function initProfilePhotosIndex() {
+    if (profileIndexPromise) return profileIndexPromise;
+    profileIndexPromise = (async () => {
+        try {
+            const resp = await fetch('./Foto%20de%20Perfil/', { cache: 'no-cache' });
+            if (resp.ok) {
+                const html = await resp.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'));
+                
+                links.forEach(a => {
+                    let href = a.getAttribute('href');
+                    if (!href) return;
+                    href = href.split('?')[0].split('#')[0];
+                    const filename = decodeURIComponent(href.replace(/^.*[\\\/]/, ''));
+                    const match = filename.match(/^(.+?)\.(png|jpe?g|webp)$/i);
+                    if (match && !filename.startsWith('.')) {
+                        const docId = match[1].trim();
+                        profilePhotosIndex.set(docId, filename);
+                    }
+                });
+            }
+        } catch (e) {
+            // Si el servidor no soporta listado, setProfilePhoto usará la resolución reactiva en cascada
+        }
+        return profilePhotosIndex;
+    })();
+    return profileIndexPromise;
+}
+
+/**
+ * Asigna la foto de perfil al elemento <img>, detectando automáticamente si es .png, .jpg o .jpeg.
+ * Cuenta con caché en memoria y fallback en cascada para evitar errores 404 innecesarios.
+ */
 function setProfilePhoto(imgElement, user) {
-    if (!user || !user.documento) return;
+    if (!imgElement || !user || !user.documento) return;
     const docStr = user.documento.toString().trim();
-    const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=01326c&color=fff`;
-    
-    imgElement.onerror = function() {
-        if (this.src.includes('.png')) {
-            this.src = `./Foto%20de%20Perfil/${encodeURIComponent(docStr)}.jpg`;
-        } else if (!this.src.startsWith('https://ui-avatars')) {
+    const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&background=01326c&color=fff`;
+
+    // Función auxiliar para aplicar el archivo conocido
+    const applyKnownFile = (filename) => {
+        imgElement.onerror = function() {
+            this.onerror = null;
             this.src = fallbackUrl;
+        };
+        imgElement.src = `./Foto%20de%20Perfil/${encodeURIComponent(filename)}`;
+    };
+
+    // 1. Si ya está en nuestro índice en memoria:
+    if (profilePhotosIndex.has(docStr)) {
+        applyKnownFile(profilePhotosIndex.get(docStr));
+        return;
+    }
+
+    // 2. Si la indexación inicial sigue en proceso, intentar resolver cuando termine si aún está con avatar por defecto
+    if (profileIndexPromise) {
+        profileIndexPromise.then(indexMap => {
+            if (indexMap.has(docStr) && imgElement.src.startsWith('https://ui-avatars')) {
+                applyKnownFile(indexMap.get(docStr));
+            }
+        }).catch(() => {});
+    }
+
+    // 3. Cascada reactiva de extensiones (.jpg primero por compatibilidad con la base actual, luego .png y .jpeg)
+    const extensionsToTry = ['.jpg', '.png', '.jpeg', '.JPG', '.PNG'];
+    let attemptIndex = 0;
+
+    function tryNextExtension() {
+        if (attemptIndex < extensionsToTry.length) {
+            const ext = extensionsToTry[attemptIndex++];
+            imgElement.src = `./Foto%20de%20Perfil/${encodeURIComponent(docStr)}${ext}`;
+        } else {
+            // Se agotaron las extensiones: asignar avatar por defecto
+            imgElement.onerror = null;
+            imgElement.onload = null;
+            imgElement.src = fallbackUrl;
+        }
+    }
+
+    imgElement.onload = function() {
+        // Al encontrar con éxito el archivo, guardarlo en el mapa para futuras consultas
+        if (this.src && !this.src.startsWith('https://ui-avatars')) {
+            const filename = decodeURIComponent(this.src.split('/').pop().split('?')[0]);
+            profilePhotosIndex.set(docStr, filename);
         }
     };
-    imgElement.src = `./Foto%20de%20Perfil/${encodeURIComponent(docStr)}.png`;
+
+    imgElement.onerror = function() {
+        tryNextExtension();
+    };
+
+    tryNextExtension();
 }
 
 // ==========================================
@@ -968,37 +1060,129 @@ function stopImpersonation() {
 // =========================================================================
 
 /**
- * 1. FONDO DINÁMICO DE POLAROIDS: SOLO FOTOS DE 'Fotos Carrusel', SIN IMÁGENES FLOTANTES
+ * 1. FONDO DINÁMICO DE POLAROIDS: LEE FOTOS DE 'Fotos Carrusel' (.PNG O .JPG)
  */
-function initPolaroidBackground() {
+
+/**
+ * Obtiene la lista dinámica de fotos de la carpeta "Fotos Carrusel".
+ * Detecta automáticamente archivos .png, .jpg y .jpeg del servidor local o del manifiesto data/carrusel.json.
+ */
+async function getCarruselPhotosList() {
+    // Estrategia 1: Leer listado de directorio generado por el servidor local (Python http.server)
+    try {
+        const resp = await fetch('./Fotos%20Carrusel/', { cache: 'no-cache' });
+        if (resp.ok) {
+            const html = await resp.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const links = Array.from(doc.querySelectorAll('a'));
+            const foundFiles = [];
+
+            for (const a of links) {
+                let href = a.getAttribute('href');
+                if (!href) continue;
+                href = href.split('?')[0].split('#')[0];
+                const filename = decodeURIComponent(href.replace(/^.*[\\\/]/, ''));
+                if (/\.(png|jpe?g|webp)$/i.test(filename) && !filename.startsWith('.')) {
+                    if (!foundFiles.includes(filename)) {
+                        foundFiles.push(filename);
+                    }
+                }
+            }
+
+            if (foundFiles.length > 0) {
+                // Orden natural (1, 2, ... 9, 10, etc.)
+                foundFiles.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+                return foundFiles.map(fn => `Fotos Carrusel/${fn}`);
+            }
+        }
+    } catch (e) {
+        // Ignorar si fetch de directorio no está habilitado (p. ej. en file://)
+    }
+
+    // Estrategia 2: Cargar desde data/carrusel.json si está disponible
+    try {
+        const manifestResp = await fetch('./data/carrusel.json', { cache: 'no-cache' });
+        if (manifestResp.ok) {
+            const manifestList = await manifestResp.json();
+            if (Array.isArray(manifestList) && manifestList.length > 0) {
+                return manifestList.map(fn => fn.startsWith('Fotos Carrusel/') ? fn : `Fotos Carrusel/${fn}`);
+            }
+        }
+    } catch (e) {}
+
+    // Estrategia 3: Lista base con números 1 a 18 (con autoreparación reactiva .jpg <-> .png en cada tarjeta)
+    const fallbackList = [];
+    for (let i = 1; i <= 18; i++) {
+        fallbackList.push(`Fotos Carrusel/${i}.jpg`);
+    }
+    return fallbackList;
+}
+
+/**
+ * Crea una tarjeta Polaroid con autoreparación de extensión (.png <-> .jpg).
+ */
+function createPolaroidCard(photoSrc, rotDeg) {
+    const card = document.createElement('div');
+    card.className = 'polaroid-card';
+    card.style.setProperty('--rot', `${rotDeg}deg`);
+
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = 'Momento BaseTek';
+
+    let attempts = 0;
+    img.onerror = function() {
+        attempts++;
+        if (attempts === 1) {
+            const srcAttr = this.getAttribute('data-curr-src') || this.src;
+            // Si falló con .jpg o .jpeg, intentar con .png
+            if (/\.jpe?g($|\?)/i.test(srcAttr)) {
+                const newSrc = srcAttr.replace(/\.jpe?g($|\?)/i, '.png$1');
+                this.setAttribute('data-curr-src', newSrc);
+                this.src = encodeURI(newSrc);
+                return;
+            } 
+            // Si falló con .png, intentar con .jpg
+            else if (/\.png($|\?)/i.test(srcAttr)) {
+                const newSrc = srcAttr.replace(/\.png($|\?)/i, '.jpg$1');
+                this.setAttribute('data-curr-src', newSrc);
+                this.src = encodeURI(newSrc);
+                return;
+            }
+        }
+        // Si no existe con ninguna extensión, remover la tarjeta para evitar tarjeta rota
+        this.onerror = null;
+        card.remove();
+    };
+
+    img.setAttribute('data-curr-src', photoSrc);
+    img.src = encodeURI(photoSrc);
+    card.appendChild(img);
+    return card;
+}
+
+async function initPolaroidBackground() {
     const container = document.getElementById('polaroidBackground');
     if (!container) return;
 
-    // Solo las fotos de la carpeta "Fotos Carrusel"
-    const carruselPhotos = [
-        'Fotos Carrusel/20231212_140546.jpg',
-        'Fotos Carrusel/20241218_123354.jpg',
-        'Fotos Carrusel/20241218_123738.jpg',
-        'Fotos Carrusel/20251002_164122.jpg',
-        'Fotos Carrusel/20251002_164318 - copia.jpg',
-        'Fotos Carrusel/20261002_165449.jpg',
-        'Fotos Carrusel/20261002_165507.jpg',
-        'Fotos Carrusel/20261002_165609.jpg',
-        'Fotos Carrusel/20261002_170616.jpg',
-        'Fotos Carrusel/20261002_171049.jpg',
-        'Fotos Carrusel/20261002_171852.jpg',
-        'Fotos Carrusel/20261002_172604.jpg',
-        'Fotos Carrusel/20261002_172648.jpg',
-        'Fotos Carrusel/20261002_173722.jpg'
-    ];
+    // Obtener fotos de la carpeta "Fotos Carrusel" (dinámicamente .png o .jpg)
+    const carruselPhotos = await getCarruselPhotosList();
+    if (!carruselPhotos || carruselPhotos.length === 0) return;
 
     container.innerHTML = '';
 
-    // Dividimos las 14 fotos: 7 para el carrusel superior y 7 para el carrusel inferior
-    const topSet = carruselPhotos.slice(0, 7);
-    const bottomSet = carruselPhotos.slice(7, 14);
+    // Dividimos las fotos entre el carrusel superior e inferior
+    const mid = Math.ceil(carruselPhotos.length / 2);
+    let topSet = carruselPhotos.slice(0, mid);
+    let bottomSet = carruselPhotos.slice(mid);
+    if (bottomSet.length === 0) bottomSet = [...topSet];
 
-    // Duplicamos cada conjunto para que el carrusel infinito sea continuo y sin cortes
+    // Asegurar que haya suficientes fotos para cubrir la pista de 320vw continuamente
+    while (topSet.length < 8) topSet = topSet.concat(topSet);
+    while (bottomSet.length < 8) bottomSet = bottomSet.concat(bottomSet);
+
+    // Duplicamos cada conjunto para que el carrusel infinito sea continuo y sin cortes al llegar al 50%
     const topPhotos = [...topSet, ...topSet];
     const bottomPhotos = [...bottomSet, ...bottomSet];
 
@@ -1007,11 +1191,7 @@ function initPolaroidBackground() {
     streamTop.className = 'polaroid-stream-track stream-top';
     topPhotos.forEach((src, idx) => {
         const rot = ((idx % 5) - 2) * 3.5;
-        const card = document.createElement('div');
-        card.className = 'polaroid-card';
-        card.style.setProperty('--rot', `${rot}deg`);
-        card.innerHTML = `<img src="${encodeURI(src)}" loading="lazy" alt="Momento BaseTek">`;
-        streamTop.appendChild(card);
+        streamTop.appendChild(createPolaroidCard(src, rot));
     });
     container.appendChild(streamTop);
 
@@ -1020,15 +1200,9 @@ function initPolaroidBackground() {
     streamBottom.className = 'polaroid-stream-track stream-bottom';
     bottomPhotos.forEach((src, idx) => {
         const rot = ((idx % 4) - 1.5) * 4;
-        const card = document.createElement('div');
-        card.className = 'polaroid-card';
-        card.style.setProperty('--rot', `${rot}deg`);
-        card.innerHTML = `<img src="${encodeURI(src)}" loading="lazy" alt="Momento BaseTek">`;
-        streamBottom.appendChild(card);
+        streamBottom.appendChild(createPolaroidCard(src, rot));
     });
     container.appendChild(streamBottom);
-
-    // Se eliminaron las fotos flotantes de esquinas para evitar que tapen el contenido
 }
 
 /**
