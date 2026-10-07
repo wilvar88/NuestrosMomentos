@@ -37,6 +37,24 @@ const modals = {
 // EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicialización de Fondo Polaroid Dinámico, Cursor Cósmico y Cámara
+    initPolaroidBackground();
+    initCosmicCometCursor();
+    initCameraInteractions();
+
+    // Soporte para presionar 'Enter' en inputs
+    const docInput = document.getElementById('documentoInput');
+    if (docInput) {
+        docInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') requestToken();
+        });
+    }
+    const tokInput = document.getElementById('tokenInput');
+    if (tokInput) {
+        tokInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') verifyToken();
+        });
+    }
     // Autenticación
     document.getElementById('requestTokenBtn').addEventListener('click', requestToken);
     document.getElementById('verifyTokenBtn').addEventListener('click', verifyToken);
@@ -813,8 +831,46 @@ function generatePdf() {
 }
 
 function switchView(viewName) {
-    Object.values(views).forEach(v => v.classList.remove('active-view'));
-    views[viewName].classList.add('active-view');
+    const authStage = document.getElementById('authHeroStage');
+    const polaroidBg = document.getElementById('polaroidBackground');
+    
+    Object.values(views).forEach(v => {
+        if (v) v.classList.remove('active-view');
+    });
+    
+    if (views[viewName]) {
+        views[viewName].classList.add('active-view');
+    }
+    
+    // Atenuar el fondo en la galería para que no compita con el contenido
+    if (polaroidBg) {
+        if (viewName === 'gallery' || viewName === 'admin') {
+            polaroidBg.classList.add('subtle-mode');
+        } else {
+            polaroidBg.classList.remove('subtle-mode');
+        }
+    }
+    
+    if (authStage) {
+        if (viewName === 'login' || viewName === 'token') {
+            authStage.style.display = 'flex';
+            if (viewName === 'token') {
+                authStage.classList.add('mode-token');
+                setTimeout(() => {
+                    const tokenInp = document.getElementById('tokenInput');
+                    if (tokenInp) tokenInp.focus();
+                }, 200);
+            } else {
+                authStage.classList.remove('mode-token');
+                setTimeout(() => {
+                    const docInp = document.getElementById('documentoInput');
+                    if (docInp) docInp.focus();
+                }, 200);
+            }
+        } else {
+            authStage.style.display = 'none';
+        }
+    }
 }
 
 function showMessage(elementId, msg, isSuccess) {
@@ -847,7 +903,6 @@ async function openProfileModal() {
     document.getElementById('stat-clap').innerText = totalStats.clap;
     document.getElementById('stat-haha').innerText = totalStats.haha;
 }
-
 
 // ==========================================
 // SUPLANTACIÓN DE USUARIO (ADMIN)
@@ -888,7 +943,6 @@ function impersonateUser(userIndexOrObj) {
     loadGallery(true); // Forzar refresh para evitar caché del admin
 }
 
-
 function stopImpersonation() {
     if (!originalAdminUser) return;
     
@@ -907,4 +961,368 @@ function stopImpersonation() {
     document.getElementById('logoutBtn').style.display = 'block';
     
     switchView('admin');
+}
+
+// =========================================================================
+// MÓDULOS DE DISEÑO DINÁMICO: POLAROIDS, CÁMARA & CURSOR COMETA CÓSMICA
+// =========================================================================
+
+/**
+ * 1. FONDO DINÁMICO DE POLAROIDS: SOLO FOTOS DE 'Fotos Carrusel', SIN IMÁGENES FLOTANTES
+ */
+function initPolaroidBackground() {
+    const container = document.getElementById('polaroidBackground');
+    if (!container) return;
+
+    // Solo las fotos de la carpeta "Fotos Carrusel"
+    const carruselPhotos = [
+        'Fotos Carrusel/20231212_140546.jpg',
+        'Fotos Carrusel/20241218_123354.jpg',
+        'Fotos Carrusel/20241218_123738.jpg',
+        'Fotos Carrusel/20251002_164122.jpg',
+        'Fotos Carrusel/20251002_164318 - copia.jpg',
+        'Fotos Carrusel/20261002_165449.jpg',
+        'Fotos Carrusel/20261002_165507.jpg',
+        'Fotos Carrusel/20261002_165609.jpg',
+        'Fotos Carrusel/20261002_170616.jpg',
+        'Fotos Carrusel/20261002_171049.jpg',
+        'Fotos Carrusel/20261002_171852.jpg',
+        'Fotos Carrusel/20261002_172604.jpg',
+        'Fotos Carrusel/20261002_172648.jpg',
+        'Fotos Carrusel/20261002_173722.jpg'
+    ];
+
+    container.innerHTML = '';
+
+    // Dividimos las 14 fotos: 7 para el carrusel superior y 7 para el carrusel inferior
+    const topSet = carruselPhotos.slice(0, 7);
+    const bottomSet = carruselPhotos.slice(7, 14);
+
+    // Duplicamos cada conjunto para que el carrusel infinito sea continuo y sin cortes
+    const topPhotos = [...topSet, ...topSet];
+    const bottomPhotos = [...bottomSet, ...bottomSet];
+
+    // Carrusel Superior (flujo hacia la izquierda)
+    const streamTop = document.createElement('div');
+    streamTop.className = 'polaroid-stream-track stream-top';
+    topPhotos.forEach((src, idx) => {
+        const rot = ((idx % 5) - 2) * 3.5;
+        const card = document.createElement('div');
+        card.className = 'polaroid-card';
+        card.style.setProperty('--rot', `${rot}deg`);
+        card.innerHTML = `<img src="${encodeURI(src)}" loading="lazy" alt="Momento BaseTek">`;
+        streamTop.appendChild(card);
+    });
+    container.appendChild(streamTop);
+
+    // Carrusel Inferior (flujo hacia la derecha)
+    const streamBottom = document.createElement('div');
+    streamBottom.className = 'polaroid-stream-track stream-bottom';
+    bottomPhotos.forEach((src, idx) => {
+        const rot = ((idx % 4) - 1.5) * 4;
+        const card = document.createElement('div');
+        card.className = 'polaroid-card';
+        card.style.setProperty('--rot', `${rot}deg`);
+        card.innerHTML = `<img src="${encodeURI(src)}" loading="lazy" alt="Momento BaseTek">`;
+        streamBottom.appendChild(card);
+    });
+    container.appendChild(streamBottom);
+
+    // Se eliminaron las fotos flotantes de esquinas para evitar que tapen el contenido
+}
+
+/**
+ * 2. INTERACCIONES DE LA CÁMARA (EFECTO BOTÓN, DESTELLO DESDE EL FLASH Y SONIDO FOTOGRÁFICO)
+ */
+function initCameraInteractions() {
+    const shutterBtn = document.getElementById('cameraShutterBtn');
+    const cameraWrapper = document.getElementById('cameraHeroWrapper');
+
+    // Desbloquear AudioContext en la primera interacción
+    const unlockAudio = () => {
+        if (!window._cameraAudioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) window._cameraAudioCtx = new AudioCtx();
+        }
+        if (window._cameraAudioCtx && window._cameraAudioCtx.state === 'suspended') {
+            window._cameraAudioCtx.resume();
+        }
+    };
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+
+    if (cameraWrapper) {
+        cameraWrapper.addEventListener('click', () => {
+            triggerCameraFlash();
+            const docInput = document.getElementById('documentoInput');
+            if (docInput && document.getElementById('loginView').classList.contains('active-view')) {
+                docInput.focus();
+            }
+        });
+    }
+
+    if (shutterBtn) {
+        shutterBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            triggerCameraFlash();
+        });
+    }
+}
+
+// Disparo del Flash, Efecto Botón y Sonido Mecánico
+function triggerCameraFlash() {
+    // 1. Sonido de la cámara tomando la foto
+    playCameraShutterSound();
+    
+    const flashBurst = document.getElementById('cameraFlashBurst');
+    const flashFlare = document.getElementById('flashLensFlare');
+    const cameraDevice = document.getElementById('cameraDevice');
+    const shutterBtn = document.getElementById('cameraShutterBtn');
+    
+    // 2. Efecto botón en el disparador
+    if (shutterBtn) {
+        shutterBtn.classList.remove('btn-depressed');
+        void shutterBtn.offsetWidth;
+        shutterBtn.classList.add('btn-depressed');
+        setTimeout(() => shutterBtn.classList.remove('btn-depressed'), 220);
+    }
+
+    // 3. Efecto botón y rebote mecánico en el cuerpo de la cámara
+    if (cameraDevice) {
+        cameraDevice.classList.remove('body-click-active', 'recoil-active');
+        void cameraDevice.offsetWidth;
+        cameraDevice.classList.add('body-click-active');
+    }
+    
+    // 4. Luz blanca RADIADA DIRECTAMENTE DESDE EL FLASH
+    if (flashFlare) {
+        flashFlare.classList.remove('flash-firing');
+        void flashFlare.offsetWidth;
+        flashFlare.classList.add('flash-firing');
+    }
+
+    // 5. Destello ambiental en la pantalla
+    if (flashBurst) {
+        flashBurst.classList.remove('flash-active');
+        void flashBurst.offsetWidth;
+        flashBurst.classList.add('flash-active');
+    }
+}
+
+// Generador de sonido mecánico de obturador profesional con Web Audio API
+function playCameraShutterSound() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        
+        if (!window._cameraAudioCtx) {
+            window._cameraAudioCtx = new AudioCtx();
+        }
+        const ctx = window._cameraAudioCtx;
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        
+        const now = ctx.currentTime;
+        
+        // Clic metálico inicial del obturador (obturador subiendo)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(1400, now);
+        osc1.frequency.exponentialRampToValueAtTime(120, now + 0.045);
+        
+        gain1.gain.setValueAtTime(0.85, now);
+        gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.045);
+        
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.045);
+
+        // Ruido mecánico blanco simulando el espejo analógico
+        const bufferSize = Math.floor(ctx.sampleRate * 0.035);
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = (Math.random() * 2 - 1) * 0.9;
+        }
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 2400;
+        filter.Q.value = 1.2;
+        
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.7, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.035);
+        
+        whiteNoise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        whiteNoise.start(now);
+
+        // Segundo clic: cortinilla cerrándose y rebote del espejo (55ms después)
+        setTimeout(() => {
+            try {
+                const now2 = ctx.currentTime;
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880, now2);
+                osc2.frequency.exponentialRampToValueAtTime(70, now2 + 0.05);
+                
+                gain2.gain.setValueAtTime(0.8, now2);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now2 + 0.05);
+                
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now2);
+                osc2.stop(now2 + 0.05);
+            } catch(e) {}
+        }, 55);
+
+    } catch (err) {
+        console.warn('Audio de cámara:', err);
+    }
+}
+
+
+/**
+ * 3. EFECTO DE CURSOR: COLA DE COMETA CÓSMICA CON PARTÍCULAS
+ */
+function initCosmicCometCursor() {
+    // Si es un dispositivo táctil, no activar cursor de ratón
+    if (window.matchMedia && !window.matchMedia('(pointer: fine)').matches) return;
+
+    const canvas = document.getElementById('cosmicCursorCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    let mouseX = -100;
+    let mouseY = -100;
+    let lastMouseX = -100;
+    let lastMouseY = -100;
+    let isHovering = false;
+    let particles = [];
+    let isRunning = false;
+    let idleTimer = null;
+
+    // Colores de la cometa cósmica
+    const cosmicColors = [
+        'rgba(56, 189, 248, ',  // Cyan eléctrico
+        'rgba(99, 102, 241, ',  // Zafiro índigo
+        'rgba(245, 158, 11, ',  // Oro cósmico
+        'rgba(251, 191, 36, ',  // Dorado brillante
+        'rgba(255, 255, 255, '  // Luz estelar
+    ];
+
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        // Detectar si el puntero está sobre algún elemento interactivo (efecto Hoover)
+        const target = e.target;
+        isHovering = target && (
+            target.closest('button, a, input, select, textarea, .polaroid-card, .polaroid-floating, .glass-panel, .bento-box, .stat-box, .tab-btn, .admin-icon, .close-modal, #profileBtn, #ratePortalBtn, .camera-hero-wrapper')
+        );
+
+        // Distancia recorrida
+        const dist = Math.hypot(mouseX - lastMouseX, mouseY - lastMouseY);
+        const steps = Math.min(Math.max(Math.floor(dist / 4), 1), 6);
+
+        for (let i = 0; i < steps; i++) {
+            const t = i / steps;
+            const px = lastMouseX + (mouseX - lastMouseX) * t;
+            const py = lastMouseY + (mouseY - lastMouseY) * t;
+
+            // Partícula de estela de cometa
+            const colorBase = isHovering 
+                ? (Math.random() > 0.4 ? 'rgba(251, 191, 36, ' : 'rgba(56, 189, 248, ')
+                : cosmicColors[Math.floor(Math.random() * cosmicColors.length)];
+
+            particles.push({
+                x: px + (Math.random() - 0.5) * (isHovering ? 6 : 3),
+                y: py + (Math.random() - 0.5) * (isHovering ? 6 : 3),
+                vx: (Math.random() - 0.5) * (isHovering ? 2.5 : 1.2),
+                vy: (Math.random() - 0.5) * (isHovering ? 2.5 : 1.2) + 0.3,
+                size: isHovering ? Math.random() * 4.5 + 2.5 : Math.random() * 3 + 1.5,
+                colorBase: colorBase,
+                life: 1.0,
+                decay: isHovering ? Math.random() * 0.035 + 0.025 : Math.random() * 0.045 + 0.03,
+                isSpark: isHovering && Math.random() > 0.5
+            });
+        }
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        if (!isRunning) {
+            isRunning = true;
+            requestAnimationFrame(renderComet);
+        }
+
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            // Reposo suave
+        }, 1200);
+    });
+
+    function renderComet() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Si el mouse está en pantalla, dibujar núcleo de la cometa
+        if (mouseX > 0 && mouseY > 0 && particles.length > 0) {
+            const glowRadius = isHovering ? 18 : 10;
+            const grad = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, glowRadius);
+            grad.addColorStop(0, isHovering ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)');
+            grad.addColorStop(0.3, isHovering ? 'rgba(251, 191, 36, 0.65)' : 'rgba(56, 189, 248, 0.6)');
+            grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Dibujar y actualizar partículas de la cola cósmica
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= p.decay;
+
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+                continue;
+            }
+
+            const currentAlpha = Math.max(0, p.life);
+            ctx.fillStyle = p.colorBase + currentAlpha + ')';
+            ctx.shadowColor = p.isSpark ? '#fbbf24' : '#38bdf8';
+            ctx.shadowBlur = p.isSpark ? 10 : 5;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.shadowBlur = 0; // Reset shadow
+
+        if (particles.length > 0) {
+            requestAnimationFrame(renderComet);
+        } else {
+            isRunning = false;
+        }
+    }
 }
