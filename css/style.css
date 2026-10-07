@@ -1,119 +1,253 @@
-﻿:root {
-    --primary: #01326c;
-    --primary-dark: #001f45;
-    --secondary: #43bff5;
-    --tertiary: #2279b1;
+/* ==========================================
+   SISTEMA DE DISEÑO LUXURY - BASETEK MOMENTOS
+   ========================================== */
+:root {
+    --primary: #070913;
+    --primary-dark: #030408;
+    --primary-surface: #0d1326;
+    --secondary: #38bdf8;
+    --secondary-glow: rgba(56, 189, 248, 0.45);
+    --gold: #f59e0b;
+    --gold-light: #fbbf24;
+    --gold-glow: rgba(245, 158, 11, 0.35);
+    --tertiary: #6366f1;
+    --tertiary-glow: rgba(99, 102, 241, 0.35);
     --white: #ffffff;
-    --glass-bg: rgba(255, 255, 255, 0.1);
-    --glass-border: rgba(255, 255, 255, 0.2);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --glass-bg: rgba(13, 19, 36, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-border-hover: rgba(56, 189, 248, 0.38);
+    --glass-shadow: 0 25px 60px rgba(0, 0, 0, 0.55), 0 0 35px rgba(56, 189, 248, 0.08);
     --text-dark: #333;
+    --text-muted: #94a3b8;
+    --text-light: #f8fafc;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--tertiary) 100%);
-    background-attachment: fixed;
+    background-color: var(--primary-dark);
     color: var(--white);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+    position: relative;
 }
 
-/* AnimaciÃ³n de fondo fluida */
-.background-anim {
+/* ==========================================
+   FONDO CÓSMICO DE LUJO (100% LIGERO, SIN GIF)
+   ========================================== */
+.cosmic-deep-background {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: radial-gradient(circle at 10% 20%, rgba(67, 191, 245, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(34, 121, 177, 0.2) 0%, transparent 40%);
-    z-index: -1;
-    animation: floatingBackground 20s ease-in-out infinite alternate;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at 18% 15%, #12182e 0%, #080a14 55%, #030407 100%);
+    z-index: -3;
+    pointer-events: none;
 }
 
-.background-anim::after {
+.cosmic-ambient-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: 
+        radial-gradient(circle at 85% 18%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 12% 82%, rgba(99, 102, 241, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 60%);
+    z-index: -2;
+    pointer-events: none;
+    animation: ambientBreathe 20s ease-in-out infinite alternate;
+}
+
+@keyframes ambientBreathe {
+    0% { transform: scale(1) translate(0, 0); opacity: 0.8; }
+    50% { transform: scale(1.04) translate(1.5%, 1%); opacity: 1; }
+    100% { transform: scale(0.98) translate(-1%, -1%); opacity: 0.85; }
+}
+
+/* ==========================================
+   FONDO POLAROID DINÁMICO CON MOVIMIENTO
+   ========================================== */
+.polaroid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Carruseles / Streams horizontales en sentidos opuestos */
+.polaroid-stream-track {
+    position: absolute;
+    width: 320vw;
+    display: flex;
+    gap: 36px;
+    align-items: center;
+    opacity: 0.58;
+    transition: opacity 0.5s ease;
+}
+
+.stream-top {
+    top: 5%;
+    left: 0;
+    animation: streamDriftLeft 85s linear infinite;
+}
+
+.stream-bottom {
+    bottom: 7%;
+    left: -160vw;
+    animation: streamDriftRight 95s linear infinite;
+}
+
+@keyframes streamDriftLeft {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes streamDriftRight {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50%); }
+}
+
+/* Estilo Base de las Fotos Polaroid */
+.polaroid-card {
+    background: #ffffff;
+    padding: 8px 8px 26px 8px;
+    border-radius: 4px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+    transform: rotate(var(--rot, 0deg));
+    filter: saturate(0.92) contrast(1.05);
+    flex-shrink: 0;
+    width: 160px;
+    height: 195px;
+    position: relative;
+    will-change: transform;
+}
+
+.polaroid-card img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 2px;
+    background-color: #1e2433;
+}
+
+.polaroid-card::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-image: url('../Galeria.gif');
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    z-index: -1;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(2px);
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-@keyframes floatingBackground {
-    0% { transform: scale(1) translate(0, 0); }
-    50% { transform: scale(1.05) translate(2%, 2%); }
-    100% { transform: scale(1) translate(-2%, -2%); }
+/* Modo sutil cuando se navega dentro de la galería para no competir con el contenido */
+.polaroid-background.subtle-mode .polaroid-stream-track {
+    opacity: 0.18;
 }
 
-body:hover .background-anim::after {
-    opacity: 0.15;
+/* ==========================================
+   CANVAS CURSOR COMETA CÓSMICA
+   ========================================== */
+.cosmic-cursor-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 999999;
 }
 
-/* Glassmorphism Premium */
+/* ==========================================
+   GLASSMORPHISM & HEADER PREMIUM
+   ========================================== */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 2.5rem;
     box-shadow: var(--glass-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
 }
 
 .glass-panel:hover {
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), 0 0 45px rgba(56, 189, 248, 0.14);
+    border-color: var(--glass-border-hover);
 }
 
-/* Header */
 header.glass-header {
-    background: rgba(1, 31, 69, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    padding: 1rem 3rem;
+    background: rgba(7, 10, 20, 0.82);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    padding: 1.1rem 3rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
 }
 
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
 }
 
 .logo {
-    height: 45px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-    transition: transform 0.3s;
+    height: 46px;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .logo:hover {
-    transform: scale(1.05);
+    transform: scale(1.08) rotate(-2deg);
 }
 
 h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    background: linear-gradient(90deg, #fff, var(--secondary));
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 40%, var(--secondary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
 .user-actions {
@@ -126,32 +260,555 @@ h1 {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(255,255,255,0.05);
-    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 6px 18px;
     border-radius: 30px;
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: background 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.3s ease;
 }
 
 .user-profile-sm:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--secondary);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
 }
 
 .user-profile-sm img {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--secondary);
 }
 
-/* Vistas y Contenedores */
+/* ==========================================
+   ESCENARIO SPLIT HERO: CÁMARA & MODAL DE ACCESO
+   ========================================== */
+.auth-hero-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4rem;
+    min-height: calc(100vh - 180px);
+    width: 100%;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* Cámara a la Izquierda */
+.camera-hero-wrapper {
+    flex: 1;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: heroSlideLeft 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    cursor: pointer;
+    user-select: none;
+}
+
+@keyframes heroSlideLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-90px) scale(0.92);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Contenedor de Formularios a la Derecha */
+.auth-forms-container {
+    flex: 1;
+    max-width: 460px;
+    width: 100%;
+    animation: heroSlideRight 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heroSlideRight {
+    0% {
+        opacity: 0;
+        transform: translateX(90px) scale(0.92);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Transición interactiva: la cámara se desplaza a la izquierda y el modal a la derecha */
+.auth-hero-stage .camera-hero-wrapper {
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-hero-stage .auth-forms-container {
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-hero-stage.mode-token .camera-hero-wrapper {
+    transform: translateX(-40px) scale(0.96);
+}
+
+.auth-hero-stage.mode-token .auth-forms-container {
+    transform: translateX(30px);
+}
+
+.auth-hero-stage.mode-token #tokenView {
+    animation: tokenSlideIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tokenSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* ==========================================
+   DISEÑO HYPER-LUXURY DE LA CÁMARA FOTOGRÁFICA
+   ========================================== */
+.camera-device {
+    position: relative;
+    width: 320px;
+    filter: drop-shadow(0 25px 45px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 30px rgba(56, 189, 248, 0.15));
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.camera-hero-wrapper:hover .camera-device {
+    transform: translateY(-8px) scale(1.03);
+}
+
+/* Barra Superior Metálica */
+.camera-top-bar {
+    height: 38px;
+    background: linear-gradient(180deg, #3a4254 0%, #202633 60%, #161b24 100%);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    position: relative;
+    border-bottom: 2px solid #0f131a;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+}
+
+/* Botón disparador metálico */
+.camera-shutter-btn {
+    position: absolute;
+    top: -12px;
+    left: 36px;
+    width: 28px;
+    height: 14px;
+    background: linear-gradient(180deg, #d8dfea 0%, #8a94a6 60%, #586377 100%);
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4), inset 0 1px 1px #fff;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.camera-shutter-btn:hover {
+    transform: translateY(2px);
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%);
+}
+
+.camera-shutter-btn:active {
+    transform: translateY(5px);
+}
+
+/* Dial de modo */
+.camera-dial {
+    position: absolute;
+    top: -8px;
+    right: 40px;
+    width: 32px;
+    height: 10px;
+    background: linear-gradient(180deg, #d8dfea 0%, #64748b 100%);
+    border-radius: 3px 3px 0 0;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Zapato de flash (hotshoe) */
+.camera-hotshoe {
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 7px;
+    background: #11141a;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 2px 2px 0 0;
+}
+
+/* Módulo de Flash */
+.camera-flash-unit {
+    position: absolute;
+    right: 88px;
+    top: 6px;
+    width: 26px;
+    height: 20px;
+    background: #151a24;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible; /* Permite que el destello se expanda hacia afuera */
+}
+
+.flash-reflector {
+    width: 20px;
+    height: 14px;
+    background: radial-gradient(circle, #f8fafc 0%, #94a3b8 60%, #334155 100%);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Destello Radiante que Emerge Directamente del Flash */
+.flash-lens-flare {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, 
+        #ffffff 0%, 
+        rgba(255, 255, 255, 1) 22%, 
+        rgba(186, 230, 253, 0.92) 42%, 
+        rgba(56, 189, 248, 0.5) 60%, 
+        transparent 75%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    box-shadow: 0 0 90px #ffffff, 0 0 160px rgba(56, 189, 248, 0.95);
+}
+
+.flash-lens-flare.flash-firing {
+    animation: flashFlareBurst 0.45s cubic-bezier(0.08, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes flashFlareBurst {
+    0% {
+        transform: translate(-50%, -50%) scale(0.1);
+        opacity: 1;
+    }
+    15% {
+        transform: translate(-50%, -50%) scale(1.25);
+        opacity: 1;
+    }
+    55% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+.flash-bulb {
+    width: 7px;
+    height: 7px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.8), 0 0 14px rgba(255, 255, 255, 0.9);
+    animation: bulbPulse 3s infinite ease-in-out;
+}
+
+@keyframes bulbPulse {
+    0%, 100% { opacity: 0.7; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Cuerpo de la Cámara */
+.camera-body {
+    height: 195px;
+    background: #161c28;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 -2px 5px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: none;
+}
+
+/* Textura Leatherette */
+.camera-leatherette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 80%),
+                repeating-linear-gradient(45deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 2px, transparent 2px, transparent 4px);
+    opacity: 0.85;
+}
+
+/* Visor óptico */
+.camera-viewfinder {
+    position: absolute;
+    top: 14px;
+    left: 36px;
+    width: 22px;
+    height: 15px;
+    background: #090d14;
+    border-radius: 3px;
+    border: 1.5px solid #334155;
+    box-shadow: inset 0 0 6px rgba(56, 189, 248, 0.5);
+}
+
+/* Punto Rojo Estilo Coleccionista */
+.camera-red-dot {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle at 35% 35%, #ff4d4d 0%, #cc0000 70%, #800000 100%);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(255, 0, 0, 0.5);
+}
+
+/* Ensamblaje del Lente Frontal */
+.camera-lens-assembly {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -46%);
+    width: 148px;
+    height: 148px;
+}
+
+.lens-outer-bezel {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #374151 0%, #111827 50%, #030712 100%);
+    border-radius: 50%;
+    padding: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.35);
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.lens-ribbed-focus {
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+}
+
+.lens-aperture-scale {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.55rem;
+    color: var(--gold-light);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-family: monospace;
+}
+
+.lens-glass-element {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 45% 45%, #0e1e38 0%, #060d1a 60%, #020408 100%);
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(56, 189, 248, 0.15);
+    border: 2px solid #222d3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Reflejo Iridiscente del Cristal del Lente */
+.lens-reflection {
+    position: absolute;
+    top: -20%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(99, 102, 241, 0.15) 35%, transparent 60%, rgba(245, 158, 11, 0.15) 100%);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: transform 0.6s ease;
+}
+
+.camera-hero-wrapper:hover .lens-reflection {
+    transform: rotate(45deg);
+}
+
+.lens-iris {
+    width: 44px;
+    height: 44px;
+    background: #030712;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    transition: transform 0.3s ease;
+}
+
+.camera-hero-wrapper:hover .lens-iris {
+    transform: scale(0.92);
+}
+
+.lens-icon {
+    font-size: 1.15rem;
+    color: var(--secondary);
+    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.6));
+}
+
+/* Placa de Marca Metálica */
+.camera-brand-plate {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 3px 12px;
+    border-radius: 12px;
+}
+
+.camera-brand-plate span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    font-family: 'Inter', sans-serif;
+}
+
+.camera-grip {
+    position: absolute;
+    right: 0;
+    top: 15px;
+    bottom: 15px;
+    width: 24px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.4));
+    border-radius: 0 16px 16px 0;
+}
+
+/* Destello de Flash */
+.camera-flash-burst {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at 35% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 40%, transparent 80%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 99999;
+}
+
+.camera-flash-burst.flash-active {
+    animation: flashEffect 0.45s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes flashEffect {
+    0% { opacity: 0.95; }
+    30% { opacity: 0.6; }
+    100% { opacity: 0; }
+}
+
+/* Efecto Botón Mecánico de Disparo */
+.camera-shutter-btn.btn-depressed {
+    transform: translateY(6px) !important;
+    background: linear-gradient(180deg, #64748b 0%, #334155 100%) !important;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8) !important;
+    transition: transform 0.08s ease, background 0.08s ease !important;
+}
+
+.camera-device.recoil-active,
+.camera-device.body-click-active {
+    animation: cameraRecoil 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cameraRecoil {
+    0% { transform: scale(1) translateY(0); }
+    25% { transform: scale(0.96) translateY(5px); }
+    60% { transform: scale(1.03) translateY(-3px); }
+    100% { transform: scale(1) translateY(0); }
+}
+
+.camera-caption {
+    margin-top: 18px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--secondary);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--secondary);
+    animation: livePulse 2s infinite ease-in-out;
+}
+
+@keyframes livePulse {
+    0%, 100% { transform: scale(0.9); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* Badges de Formularios */
+.auth-card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--secondary);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+}
+
+.auth-card-badge.token-badge {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: var(--gold-light);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+}
+
+/* ==========================================
+   VISTAS Y CONTENEDORES
+   ========================================== */
 main.container {
     flex: 1;
-    padding: 3rem 2rem;
+    padding: 2.5rem 2rem;
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    width: 100%;
 }
 
 section {
@@ -170,72 +827,109 @@ section.view {
 }
 
 @keyframes slideUpFade {
-    from { opacity: 0; transform: translateY(30px); }
+    from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 h2 { 
-    margin-bottom: 1.2rem; 
-    color: var(--secondary); 
-    font-weight: 500;
-    font-size: 1.8rem;
+    margin-bottom: 1rem; 
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.85rem;
+    letter-spacing: -0.02em;
 }
+
 p { 
     margin-bottom: 1.8rem; 
     line-height: 1.6; 
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.98rem;
 }
 
-/* Inputs y Botones */
+/* Inputs y Botones Premium */
 .input-group {
     margin-bottom: 1.8rem;
     position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-prefix-icon {
+    position: absolute;
+    left: 18px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+    pointer-events: none;
+}
+
+.input-group:focus-within .input-prefix-icon {
+    color: var(--secondary);
 }
 
 input[type="text"] {
     width: 100%;
-    padding: 15px 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(0, 0, 0, 0.2);
+    padding: 16px 20px 16px 50px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(7, 11, 22, 0.65);
     color: var(--white);
     font-size: 1.05rem;
     outline: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 input[type="text"]:focus {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(7, 11, 22, 0.85);
     border-color: var(--secondary);
-    box-shadow: 0 0 0 4px rgba(67, 191, 245, 0.15);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.18), 0 0 20px rgba(56, 189, 248, 0.12);
 }
 
-input::placeholder { color: rgba(255,255,255,0.5); }
+input::placeholder { color: rgba(255, 255, 255, 0.4); }
 
 button {
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     border: none;
     outline: none;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--secondary), #1ba6e6);
-    color: var(--primary-dark);
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #4f46e5 100%);
+    color: #ffffff;
     font-weight: 600;
-    padding: 14px 28px;
-    border-radius: 12px;
+    padding: 16px 28px;
+    border-radius: 14px;
     width: 100%;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 15px rgba(67, 191, 245, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 1.05rem;
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.35), 0 0 15px rgba(37, 99, 235, 0.2);
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-primary:hover:not(:disabled)::before {
+    left: 100%;
 }
 
 .btn-primary:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(67, 191, 245, 0.6);
-    background: linear-gradient(135deg, #5cd0ff, var(--secondary));
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 10px 28px rgba(14, 165, 233, 0.5), 0 0 25px rgba(37, 99, 235, 0.35);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -243,11 +937,29 @@ button {
 }
 
 .btn-primary:disabled {
-    background: rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.4);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.35);
     cursor: not-allowed;
     box-shadow: none;
 }
+
+/* Responsividad para Móviles */
+@media (max-width: 880px) {
+    .auth-hero-stage {
+        flex-direction: column;
+        gap: 2rem;
+        min-height: auto;
+        padding: 1rem;
+    }
+    .camera-hero-wrapper {
+        max-width: 290px;
+        transform: scale(0.9);
+    }
+    header.glass-header {
+        padding: 1rem 1.5rem;
+    }
+}
+
 
 .btn-text {
     background: transparent;
@@ -355,27 +1067,55 @@ button {
 .checkbox-group label { cursor: pointer; font-weight: 500; }
 
 /* Tabs GalerÃ­a */
+/* Tabs Galería (Banner YO y Eventos) - Sólido, Sin Blur, Máximo Contraste */
 .tabs {
-    display: flex; gap: 15px; margin-bottom: 30px;
-    background: rgba(0,0,0,0.2); padding: 8px; border-radius: 16px;
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    background: #0b1122; /* 100% opaco, sin transparencia ni blur */
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 10;
 }
+
 .tab-btn {
-    flex: 1; padding: 14px; background: transparent; color: rgba(255,255,255,0.6);
-    border-radius: 12px; font-weight: 600; font-size: 1.05rem;
+    flex: 1;
+    padding: 16px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 0.3px;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
 }
-.tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+
+.tab-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .tab-btn.active {
-    background: rgba(255,255,255,0.15); color: #fff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: slideUpFade 0.5s ease; }
 
 #tab-yo.glass-panel, #tab-eventos.glass-panel {
-    background: rgba(1, 31, 69, 0.75);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    background: rgba(9, 14, 28, 0.96); /* Sólido y opaco para que las fotos de fondo nunca quiten contraste */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
 }
 
 /* Grid de ImÃ¡genes */
@@ -1229,5 +1969,18 @@ footer {
     color: #fff;
     margin: 0;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Footer Premium */
+footer {
+    text-align: center;
+    padding: 1.4rem 2rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.45);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(4, 6, 12, 0.65);
+    backdrop-filter: blur(14px);
+    position: relative;
+    z-index: 10;
 }
 
