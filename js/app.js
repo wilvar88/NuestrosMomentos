@@ -97,6 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('prevImageBtn').addEventListener('click', () => navigateImage(-1));
     document.getElementById('nextImageBtn').addEventListener('click', () => navigateImage(1));
+    // Versión solo visualización: bloquear clic derecho / "Guardar imagen" en el visor
+    modals.image.addEventListener('contextmenu', (e) => e.preventDefault());
+    modals.image.addEventListener('dragstart', (e) => e.preventDefault());
     
     // Rating Portal
     document.getElementById('ratePortalBtn').addEventListener('click', () => {
@@ -147,6 +150,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeProfileModal').addEventListener('click', () => {
         modals.profile.style.display = 'none';
     });
+    const skipWelcomeCheck = document.getElementById('skipWelcomeCheck');
+    if (skipWelcomeCheck) {
+        skipWelcomeCheck.addEventListener('change', (e) => {
+            if (currentUser && currentUser.documento) {
+                if (e.target.checked) {
+                    localStorage.setItem('nm_skip_welcome_' + currentUser.documento, 'true');
+                } else {
+                    localStorage.removeItem('nm_skip_welcome_' + currentUser.documento);
+                }
+            }
+        });
+    }
     
     // Interacciones (Botones dentro del modal de imagen)
     document.querySelectorAll('.int-btn').forEach(btn => {
@@ -188,17 +203,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+/**
+ * Explosión de confeti a pantalla completa con el ícono de la interacción.
+ * NOTA: No usa la clase .floating-icon porque su animación CSS (floatUp) sobrescribía
+ * el transform y dejaba todas las partículas apiladas en el mismo punto.
+ * Las partículas evitan el área de la foto para no taparla.
+ */
 function createFloatingIcon(x, y, iconClass, color) {
-    for (let i = 0; i < 6; i++) {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
+    // Área de la foto a evitar (canvas del modal)
+    const canvas = document.getElementById('photoCanvas');
+    const photo = canvas ? canvas.getBoundingClientRect() : null;
+    const insidePhoto = (px, py) => photo && photo.width > 0 &&
+        px > photo.left - 20 && px < photo.right + 20 && py > photo.top - 20 && py < photo.bottom + 20;
+
+    // Capa contenedora por encima de todo
+    const layer = document.createElement('div');
+    layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483647;overflow:hidden;';
+    document.body.appendChild(layer);
+
+    const TOTAL = 40;
+    for (let i = 0; i < TOTAL; i++) {
         const icon = document.createElement('i');
-        icon.className = `fa-solid ${iconClass} floating-icon`;
-        icon.style.color = color;
-        icon.style.left = (x + (Math.random() * 60 - 30)) + 'px';
-        icon.style.top = (y + (Math.random() * 20 - 10)) + 'px';
-        icon.style.fontSize = (1.2 + Math.random()) + 'rem';
-        document.body.appendChild(icon);
-        setTimeout(() => icon.remove(), 1000);
+        icon.className = `fa-solid ${iconClass}`;
+        const size = 1.2 + Math.random() * 2.8;
+        icon.style.cssText = `position:absolute;left:${x}px;top:${y}px;color:${color};font-size:${size}rem;` +
+            `pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 0 8px ${color});`;
+        layer.appendChild(icon);
+
+        // Destino aleatorio en toda la pantalla, fuera de la foto
+        let dx, dy, tries = 0;
+        do {
+            dx = Math.random() * W;
+            dy = Math.random() * H;
+            tries++;
+        } while (insidePhoto(dx, dy) && tries < 25);
+
+        const tx = dx - x;
+        const ty = dy - y;
+        const rot = (Math.random() * 720) - 360;
+        const duration = 1400 + Math.random() * 900;
+
+        icon.animate([
+            { transform: 'translate(-50%, -50%) scale(0.3) rotate(0deg)', opacity: 1 },
+            { transform: `translate(calc(-50% + ${tx * 0.85}px), calc(-50% + ${ty * 0.85}px)) scale(1.2) rotate(${rot * 0.7}deg)`, opacity: 1, offset: 0.6 },
+            { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty + 60}px)) scale(0.9) rotate(${rot}deg)`, opacity: 0 }
+        ], { duration, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards', delay: Math.random() * 120 });
     }
+
+    setTimeout(() => layer.remove(), 2700);
 }
 
 // ==========================================
@@ -398,7 +453,8 @@ async function requestToken() {
             }
             
             switchView('gallery');
-            loadGallery();
+            galleryLoadPromise = loadGallery();
+            startWelcomeFlow(); // Usuarios recurrentes también ven tour/bienvenida
         } else {
             document.getElementById('tokenHint').innerText = `Se ha enviado un token a tu correo (${res.emailHint})`;
             switchView('token');
@@ -451,7 +507,98 @@ function enterGallery() {
     }
     
     switchView('gallery');
-    loadGallery();
+    galleryLoadPromise = loadGallery();
+    startWelcomeFlow();
+}
+
+// ==========================================
+// TOUR + MODAL DE BIENVENIDA
+// ==========================================
+let galleryLoadPromise = null;
+
+function startWelcomeFlow() {
+    if (!currentUser) return;
+    const doc = currentUser.documento;
+    const skipTour = localStorage.getItem('nm_skip_tour_' + doc) === 'true';
+    const skipWelcome = localStorage.getItem('nm_skip_welcome_' + doc) === 'true';
+
+    setTimeout(() => {
+        if (!skipTour && typeof introJs !== 'undefined') {
+            startTour(() => { if (!skipWelcome) openProfileModal(true); });
+        } else if (!skipWelcome) {
+            openProfileModal(true);
+        }
+    }, 800);
+}
+
+function startTour(onFinish) {
+    let finished = false;
+    let dontShowAgain = false;
+    const finish = () => {
+        if (finished) return; // oncomplete y onexit pueden dispararse ambos
+        finished = true;
+        if (dontShowAgain) localStorage.setItem('nm_skip_tour_' + currentUser.documento, 'true');
+        if (typeof onFinish === 'function') onFinish();
+    };
+
+    const intro = introJs();
+    intro.setOptions({
+        nextLabel: 'Siguiente',
+        prevLabel: 'Anterior',
+        doneLabel: '¡Empezar!',
+        showStepNumbers: false,
+        steps: [
+            {
+                title: '¡Bienvenido(a)! 📸',
+                intro: `Hola <b>${currentUser.nombre}</b>. Mientras cargamos tus fotos, te invitamos a dar un rápido recorrido por el portal para que conozcas todas sus funcionalidades.`,
+            },
+            {
+                element: document.querySelector('.tab-btn[data-tab="tab-yo"]'),
+                title: 'Tus Momentos',
+                intro: 'En la pestaña "YO", encontrarás una colección exclusiva de todas las fotos en las que apareces. ¡Es tu álbum personal de recuerdos!',
+                position: 'bottom'
+            },
+            {
+                element: document.querySelector('.tab-btn[data-tab="tab-eventos"]'),
+                title: 'Galería de Eventos',
+                intro: 'En "Eventos" podrás explorar todas las actividades de integración y bienestar organizadas por álbumes.',
+                position: 'bottom'
+            },
+            {
+                element: document.getElementById('profileBtn'),
+                title: 'Tu Perfil y Estadísticas',
+                intro: 'Aquí podrás ver cuántas interacciones han recibido tus fotos (Me Gusta, Me Encanta, etc.). ¡Haz clic para ver qué tanto han gustado tus momentos!',
+                position: 'left'
+            },
+            {
+                element: document.getElementById('ratePortalBtn'),
+                title: 'Califica y Comenta',
+                intro: 'Tu opinión es muy importante. No olvides calificar el portal y dejarnos tus comentarios para seguir mejorando.',
+                position: 'left'
+            }
+        ]
+    });
+
+    // Inyectar checkbox "No volver a mostrar el tour" en cada paso
+    const injectCheckbox = () => {
+        setTimeout(() => {
+            const tooltip = document.querySelector('.introjs-tooltip');
+            if (!tooltip || tooltip.querySelector('#nmTourSkip')) return;
+            const wrap = document.createElement('label');
+            wrap.className = 'nm-tour-skip';
+            wrap.innerHTML = `<input type="checkbox" id="nmTourSkip" ${dontShowAgain ? 'checked' : ''}> No volver a mostrar el tour`;
+            const buttons = tooltip.querySelector('.introjs-tooltipbuttons');
+            tooltip.insertBefore(wrap, buttons || null);
+            wrap.querySelector('input').addEventListener('change', (e) => { dontShowAgain = e.target.checked; });
+        }, 50);
+    };
+    intro.onafterchange(injectCheckbox);
+
+    intro.oncomplete(finish);
+    intro.onexit(finish);
+
+    intro.start();
+    injectCheckbox();
 }
 
 function logout() {
@@ -528,7 +675,7 @@ function renderGallery() {
             img.albumIndex = index;
             if (img.isForUser) {
                 hasMyPhotos = true;
-                misFotosGrid.appendChild(createPolaroidElement(img));
+                misFotosGrid.appendChild(createPolaroidElement(img, "misFotos"));
             }
         });
     });
@@ -610,7 +757,7 @@ function openAlbum(index) {
     document.getElementById("backToAlbumsBtn").style.display = "block";
 }
 
-function createPolaroidElement(img) {
+function createPolaroidElement(img, context = "album") {
     const div = document.createElement("div");
     div.className = "polaroid-item";
     div.dataset.url = img.url;
@@ -632,18 +779,33 @@ function createPolaroidElement(img) {
             ${statsHtml}
         </div>
     `;
-    div.onclick = () => openImageModal(img.url, img.rawUrl, img.albumIndex);
+    div.onclick = () => openImageModal(img.url, img.rawUrl, img.albumIndex, context);
     return div;
 }
 
 // ==========================================
 // PROCESAMIENTO DE IMAGEN (CANVAS)
 // ==========================================
-function openImageModal(imgUrl, rawUrl, albumIndex) {
-    if (eventsData[albumIndex] && eventsData[albumIndex].images) {
-        currentAlbumImages = eventsData[albumIndex].images;
-        currentImageIndex = currentAlbumImages.findIndex(i => i.url === imgUrl);
+function openImageModal(imgUrl, rawUrl, albumIndex, context = "album", isNavigating = false) {
+    if (!isNavigating) {
+        if (context === "misFotos") {
+            let myPhotos = [];
+            eventsData.forEach(event => {
+                if (event.images) {
+                    event.images.forEach(img => {
+                        if (img.isForUser) myPhotos.push(img);
+                    });
+                }
+            });
+            currentAlbumImages = myPhotos;
+        } else {
+            if (eventsData[albumIndex] && eventsData[albumIndex].images) {
+                currentAlbumImages = eventsData[albumIndex].images;
+            }
+        }
     }
+    
+    currentImageIndex = currentAlbumImages.findIndex(i => i.url === imgUrl);
     
     modals.image.style.display = "flex";
     const canvas = document.getElementById("photoCanvas");
@@ -681,21 +843,13 @@ function openImageModal(imgUrl, rawUrl, albumIndex) {
                 canvas.width  = Math.round((photo.naturalWidth  || 800) * ratio);
                 canvas.height = Math.round((photo.naturalHeight || 600) * ratio);
                 ctx.drawImage(photo, 0, 0, canvas.width, canvas.height);
-                
-                const btn = document.getElementById("downloadImageBtn");
-                btn.innerHTML = '<i class="fa-solid fa-download"></i> Descargar Original';
-                btn.onclick = () => {
-                    const link = document.createElement("a");
-                    link.download = `BaseTek_${Date.now()}.jpg`;
-                    link.href = rawUrl; 
-                    link.click();
-                };
             }
             
+            const photoName = currentAlbumImages[currentImageIndex]?.name || "Desconocida";
             callApi("logActivity", { 
                 documento: currentUser.documento, 
                 userObj: JSON.stringify(currentUser), 
-                activity: "Apertura de imagen" 
+                activity: `Apertura de imagen: ${photoName}` 
             });
         };
         photo.onerror = () => {
@@ -713,10 +867,6 @@ function openImageModal(imgUrl, rawUrl, albumIndex) {
                 ctx.fillStyle = 'rgba(255,255,255,0.4)';
                 ctx.fillText('Intenta abrirla desde Google Drive.', 250, 75);
                 ctx.textAlign = 'left';
-                
-                const btn = document.getElementById("downloadImageBtn");
-                btn.innerHTML = '<i class="fa-solid fa-external-link"></i> Ver en Google Drive';
-                btn.onclick = () => window.open(rawUrl, '_blank');
             }
         };
         photo.src = src; // Sin crossOrigin
@@ -737,7 +887,7 @@ function navigateImage(direction) {
     if (currentImageIndex >= currentAlbumImages.length) currentImageIndex = 0;
     
     const img = currentAlbumImages[currentImageIndex];
-    openImageModal(img.url, img.rawUrl, img.albumIndex);
+    openImageModal(img.url, img.rawUrl, img.albumIndex, "album", true);
 }
 
 // ==========================================
@@ -764,61 +914,7 @@ function drawPhotoWithFrame(photo, frameBase64, canvas, ctx, isTainted = false, 
 
         // 2. Marco encima
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-
-        // Botón de descarga
-        const btn = document.getElementById('downloadImageBtn');
-        btn.innerHTML = '<i class="fa-solid fa-download"></i> Descargar Imagen Enmarcada';
-
-        if (isTainted && originalSrc) {
-            btn.onclick = async () => {
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando descarga...';
-                try {
-                    const scriptUrl = GAS_URL + '?action=proxyImage&url=' + encodeURIComponent(originalSrc);
-                    const res = await fetch(scriptUrl);
-                    const base64 = await res.text();
-                    if (base64 && base64.startsWith("data:image")) {
-                        const tempImg = new Image();
-                        tempImg.onload = () => {
-                            const tempCanvas = document.createElement("canvas");
-                            tempCanvas.width = canvas.width;
-                            tempCanvas.height = canvas.height;
-                            const tempCtx = tempCanvas.getContext("2d");
-                            
-                            const tRatio = Math.max(tempCanvas.width / tempImg.width, tempCanvas.height / tempImg.height);
-                            const tShiftX = (tempCanvas.width - tempImg.width * tRatio) / 2;
-                            const tShiftY = (tempCanvas.height - tempImg.height * tRatio) / 2;
-                            
-                            tempCtx.drawImage(tempImg, 0, 0, tempImg.width, tempImg.height, tShiftX, tShiftY, tempImg.width * tRatio, tempImg.height * tRatio);
-                            tempCtx.drawImage(frame, 0, 0, tempCanvas.width, tempCanvas.height);
-                            
-                            const link = document.createElement('a');
-                            link.download = `BaseTek_${Date.now()}.png`;
-                            link.href = tempCanvas.toDataURL('image/png');
-                            link.click();
-                            btn.innerHTML = '<i class="fa-solid fa-download"></i> Descargar Imagen Enmarcada';
-                        };
-                        tempImg.src = base64;
-                        return;
-                    }
-                } catch (proxyErr) {
-                    console.warn("Proxy falló en descarga", proxyErr);
-                }
-                // Si el proxy falla, abrir la imagen original en una nueva pestaña
-                window.open(originalSrc, '_blank');
-                btn.innerHTML = '<i class="fa-solid fa-download"></i> Descargar Imagen Enmarcada';
-            };
-        } else {
-            btn.onclick = () => {
-                try {
-                    const link = document.createElement('a');
-                    link.download = `BaseTek_${Date.now()}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                } catch (e) {
-                    window.open(currentAlbumImages[currentImageIndex]?.rawUrl || '', '_blank');
-                }
-            };
-        }
+        // Versión solo visualización: sin botón de descarga
     };
     frame.src = frameBase64;
 }
@@ -899,7 +995,7 @@ function generatePdf() {
         doc.setFontSize(10);
         const terminos = [
             "1. Uso exclusivo personal e interno: El material disponible está destinado únicamente al recuerdo personal y al fortalecimiento de nuestra cultura corporativa. Queda prohibido el uso comercial o su difusión pública no autorizada fuera del entorno laboral.",
-            "2. Respeto a la privacidad e imagen ajena: Puedes descargar tus fotografías libremente. Si deseas publicar en redes sociales fotos donde aparezcan compañeros de equipo, asegúrate de contar previamente con su consentimiento.",
+            "2. Respeto a la privacidad e imagen ajena: Si deseas publicar en redes sociales fotos donde aparezcan compañeros de equipo, asegúrate de contar previamente con su consentimiento.",
             "3. Tratamiento de Datos Personales: Las fotografías fueron capturadas en el marco de actividades corporativas y son tratadas bajo la Política de Tratamiento de Datos Personales de BaseTek (Ley 1581 de 2012).",
             "4. Derecho de supresión (Habeas Data): Si por alguna razón prefieres que una imagen en la que apareces sea retirada de la plataforma, puedes solicitarlo en cualquier momento al área encargada (Talento Humano / Comunicaciones) y se procederá a su eliminación de la galería pública."
         ];
@@ -971,12 +1067,40 @@ function showMessage(elementId, msg, isSuccess) {
     el.className = 'message ' + (isSuccess ? 'success' : 'error');
 }
 
-async function openProfileModal() {
-    document.getElementById('profileModalName').innerText = currentUser.nombre;
-    document.getElementById('profileModalCargo').innerText = currentUser.cargo || 'Colaborador';
+async function openProfileModal(isWelcome = false) {
+    document.getElementById('profileModalName').innerText = isWelcome ? `¡Bienvenido(a), ${currentUser.nombre}!` : currentUser.nombre;
+    
+    const cargoElem = document.getElementById('profileModalCargo');
+    const skipContainer = document.getElementById('welcomeSkipContainer');
+    
+    if (isWelcome) {
+        cargoElem.innerText = '¡Qué alegría verte! Aquí tienes un resumen de las interacciones que han recibido las fotos donde apareces:';
+        cargoElem.style.color = '#fff';
+        cargoElem.style.marginTop = '10px';
+        if (skipContainer) {
+            skipContainer.style.display = 'block';
+            document.getElementById('skipWelcomeCheck').checked = false;
+        }
+    } else {
+        cargoElem.innerText = currentUser.cargo || 'Colaborador';
+        cargoElem.style.color = 'var(--secondary)';
+        cargoElem.style.marginTop = '0';
+        if (skipContainer) {
+            skipContainer.style.display = 'none';
+        }
+    }
+
     setProfilePhoto(document.getElementById('profileModalFoto'), currentUser);
     
     modals.profile.style.display = 'flex';
+    
+    // Si las fotos aún se están cargando, esperar para mostrar contadores reales
+    if ((!eventsData || eventsData.length === 0) && galleryLoadPromise) {
+        ['stat-like', 'stat-heart', 'stat-clap', 'stat-haha'].forEach(id => {
+            document.getElementById(id).innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        });
+        try { await galleryLoadPromise; } catch (e) { /* ignore */ }
+    }
     
     let totalStats = { like: 0, heart: 0, clap: 0, haha: 0 };
     eventsData.forEach(event => {
