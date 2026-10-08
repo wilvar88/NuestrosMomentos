@@ -129,7 +129,7 @@ function requestToken(documento) {
         estado: data[i][5],
         token: data[i][6],
         foto: data[i][7],
-        confirmado: data[i][8], // Columna I
+        confirmado: (data[i][8] instanceof Date) ? Utilities.formatDate(data[i][8], "America/Bogota", "yyyy-MM-dd HH:mm:ss") : data[i][8], // Columna I
         rol: data[i][9]
       };
       rowIndex = i + 1;
@@ -182,7 +182,7 @@ function verifyToken(documento, tokenIngresado) {
         estado: data[i][5],
         token: data[i][6],
         foto: data[i][7],
-        confirmado: data[i][8],
+        confirmado: (data[i][8] instanceof Date) ? Utilities.formatDate(data[i][8], "America/Bogota", "yyyy-MM-dd HH:mm:ss") : data[i][8],
         rol: data[i][9]
       };
       rowIndex = i + 1;
@@ -193,9 +193,10 @@ function verifyToken(documento, tokenIngresado) {
   if (!userFound) return { success: false, message: "Usuario no encontrado" };
   if (userFound.token.toString() !== tokenIngresado.toString()) return { success: false, message: "Token incorrecto" };
   
-  // Marcar como confirmado
-  sheet.getRange(rowIndex, 9).setValue(new Date().toLocaleDateString()); // Columna I (Confirmado)
-  userFound.confirmado = "Sí";
+  // Marcar como confirmado con fecha y hora
+  const fechaHora = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+  sheet.getRange(rowIndex, 9).setValue(fechaHora); // Columna I (Confirmado)
+  userFound.confirmado = fechaHora;
 
   enviarCorreoHTML(userFound.email, userFound.nombre);
   logActivity(documento, JSON.stringify(userFound), "Ingreso exitoso y aceptación de términos");
@@ -248,17 +249,37 @@ function getEvents(userId) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const eventosSheet = ss.getSheetByName("Eventos");
   let eventOrder = {};
+  // Normaliza nombres: minúsculas, sin tildes, espacios simples
+  const normName = (s) => s.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
   if (eventosSheet) {
     const evData = eventosSheet.getDataRange().getValues();
     for (let i = 1; i < evData.length; i++) {
       if (evData[i][1]) {
-        eventOrder[evData[i][1].toString().trim()] = {
+        eventOrder[normName(evData[i][1])] = {
             order: parseInt(evData[i][0]) || 999,
             logo: evData[i][2] ? evData[i][2].toString().trim() : null
         };
       }
     }
   }
+  // Busca el evento: primero coincidencia exacta normalizada; si no, por palabras contenidas
+  // (ej: carpeta "Carrera de la Mujer 2026" ↔ hoja "Carrera de la Mujer Bogotá 2026")
+  const findEventInfo = (folderName) => {
+    const key = normName(folderName);
+    if (eventOrder[key]) return eventOrder[key];
+    const fWords = key.split(' ');
+    let best = null, bestScore = 0;
+    for (const sheetName in eventOrder) {
+      const sWords = sheetName.split(' ');
+      const folderInSheet = fWords.every(w => sWords.includes(w));
+      const sheetInFolder = sWords.every(w => fWords.includes(w));
+      if (folderInSheet || sheetInFolder) {
+        const score = Math.min(fWords.length, sWords.length) / Math.max(fWords.length, sWords.length);
+        if (score > bestScore) { bestScore = score; best = eventOrder[sheetName]; }
+      }
+    }
+    return best || { order: 999, logo: null };
+  };
 
   // Leer interacciones — KEYED BY FILE ID (único en Drive, nunca repite entre álbumes)
   let interactionsMap = {};
@@ -294,7 +315,7 @@ function getEvents(userId) {
     const folder = folders.next();
     const folderName = folder.getName();
     if (folderName === "Fotos Perfil") continue;
-    const folderInfo = eventOrder[folderName.trim()] || { order: 999, logo: null };
+    const folderInfo = findEventInfo(folderName);
     let eventData = { name: folderName, images: [], frames: { vertical: null, horizontal: null }, order: folderInfo.order, logo: folderInfo.logo };
     const files = folder.getFiles();
     while (files.hasNext()) {
@@ -363,7 +384,7 @@ function getUsers() {
         nombre: data[i][2],
         apellido: "",
         email: data[i][4],
-        confirmado: data[i][8] || "No",
+        confirmado: (data[i][8] instanceof Date) ? Utilities.formatDate(data[i][8], "America/Bogota", "yyyy-MM-dd HH:mm:ss") : (data[i][8] || "No"),
         rol: data[i][9]
       });
     }
@@ -537,7 +558,4 @@ function generarTokenUnico(hoja) {
 
   return token;
 }
-
-
-
 
