@@ -1446,6 +1446,31 @@ footer {
 .floating-icon {
     position: fixed; pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 9999;
 }
+
+/* ===== Tour (Intro.js) ===== */
+.introjs-overlay { z-index: 100000 !important; }
+.introjs-helperLayer, .introjs-tooltipReferenceLayer { z-index: 100001 !important; }
+.introjs-tooltip {
+    background: rgba(20, 24, 45, 0.97) !important; color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 16px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important; min-width: 280px;
+}
+.introjs-tooltip-title { color: #fff !important; }
+.introjs-tooltiptext { color: rgba(255,255,255,0.9) !important; }
+.introjs-arrow.top, .introjs-arrow.top-middle, .introjs-arrow.top-right { border-bottom-color: rgba(20,24,45,0.97) !important; }
+.introjs-arrow.bottom, .introjs-arrow.bottom-middle, .introjs-arrow.bottom-right { border-top-color: rgba(20,24,45,0.97) !important; }
+.introjs-arrow.left, .introjs-arrow.left-bottom { border-right-color: rgba(20,24,45,0.97) !important; }
+.introjs-arrow.right, .introjs-arrow.right-bottom { border-left-color: rgba(20,24,45,0.97) !important; }
+.introjs-skipbutton { color: rgba(255,255,255,0.7) !important; }
+.introjs-button { border-radius: 10px !important; text-shadow: none !important; }
+.introjs-nextbutton, .introjs-donebutton {
+    background: linear-gradient(135deg, #43bff5, #7b5cff) !important; color: #fff !important; border: none !important;
+}
+.nm-tour-skip {
+    display: flex; align-items: center; gap: 8px; padding: 0 20px 10px;
+    font-size: 0.85rem; color: rgba(255,255,255,0.8); cursor: pointer; user-select: none;
+}
+.nm-tour-skip input { width: 16px; height: 16px; cursor: pointer; accent-color: #43bff5; }
 .int-btn {
     background: transparent; border: none; color: rgba(255,255,255,0.8); font-size: 1.8rem;
     cursor: pointer; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s;
