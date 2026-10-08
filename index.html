@@ -9,9 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=3">
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Intro.js para el tour -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
 </head>
 <body>
     <!-- FONDO CÓSMICO Y POLAROIDS DINÁMICAS (LIGERO, SIN GIF PESADO) -->
@@ -149,7 +151,7 @@
                     <p>Este espacio ha sido creado para revivir y compartir los mejores momentos de nuestras actividades de integración, bienestar y relacionamiento. Al acceder a esta galería, aceptas las siguientes pautas de convivencia y uso responsable:</p>
                     <ul>
                         <li><strong>Uso exclusivo personal e interno:</strong> El material disponible está destinado únicamente al recuerdo personal y al fortalecimiento de nuestra cultura corporativa. Queda prohibido el uso comercial o su difusión pública no autorizada fuera del entorno laboral.</li>
-                        <li><strong>Respeto a la privacidad e imagen ajena:</strong> Puedes descargar tus fotografías libremente. Si deseas publicar en redes sociales fotos donde aparezcan compañeros de equipo, asegúrate de contar previamente con su consentimiento.</li>
+                        <li><strong>Respeto a la privacidad e imagen ajena:</strong> Si deseas publicar en redes sociales fotos donde aparezcan compañeros de equipo, asegúrate de contar previamente con su consentimiento.</li>
                         <li><strong>Tratamiento de Datos Personales:</strong> Las fotografías fueron capturadas en el marco de actividades corporativas y son tratadas bajo la Política de Tratamiento de Datos Personales de BaseTek (Ley 1581 de 2012).</li>
                         <li><strong>Derecho de supresión (Habeas Data):</strong> Si por alguna razón prefieres que una imagen en la que apareces sea retirada de la plataforma, puedes solicitarlo en cualquier momento al área encargada (Talento Humano / Comunicaciones) y se procederá a su eliminación de la galería pública.</li>
                     </ul>
@@ -200,6 +202,12 @@
                     <div class="stat-box" title="Me Gusta"><i class="fa-solid fa-thumbs-up" style="color: #43bff5;"></i> <span id="stat-like">0</span></div>
                     <div class="stat-box" title="Aplausos"><i class="fa-solid fa-hands-clapping" style="color: #feca57;"></i> <span id="stat-clap">0</span></div>
                     <div class="stat-box" title="Me Divierte"><i class="fa-solid fa-face-laugh-squint" style="color: #ff9f43;"></i> <span id="stat-haha">0</span></div>
+                </div>
+                <div id="welcomeSkipContainer" style="margin-top: 20px; display: none; text-align: center;">
+                    <label style="color: white; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="skipWelcomeCheck" style="width: 18px; height: 18px; cursor: pointer;"> 
+                        No volver a mostrar este resumen de bienvenida
+                    </label>
                 </div>
             </div>
         </div>
@@ -329,7 +337,6 @@
                     <button class="int-btn" data-type="haha" title="Me Divierte"><i class="fa-solid fa-face-laugh-squint"></i></button>
                 </div>
                 <button class="nav-btn next-btn" id="nextImageBtn"><i class="fa-solid fa-chevron-right"></i></button>
-                <button id="downloadImageBtn" class="btn-primary"><i class="fa-solid fa-download"></i> Descargar Imagen Enmarcada</button>
             </div>
         </div>
     </main>
@@ -341,7 +348,8 @@
     <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+    <script src="js/app.js?v=4"></script>
 </body>
 </html>
 
